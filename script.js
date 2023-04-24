@@ -68,7 +68,7 @@ class View {
         const pStars =this.createElement('p', 'info_stars')
 
         pLanguage.textContent = `Name: ${data.language}`;
-        pName.textContent = `Owner: ${data.full_name.slice(0, -2)}`;
+        pName.textContent = `Owner: ${data.full_name}`;
         pStars.textContent = `Stars: ${data.stargazers_count}`;
 
         block.append(pLanguage)
@@ -95,20 +95,35 @@ class Search {
     async searchUsers(){
         const searchValue = this.view.inputEl.value
         if (searchValue) {
-            return await fetch(`https://api.github.com/search/repositories?q=${searchValue}&per_page=${userInList}`).then((res) => {
-            if(res.ok) {
-                res.json().then(res => {
-                    console.log(res);
-                    res.items.forEach(user => this.view.createRepo(user))
-                })
-            }  else {
-
-            } 
-        })
+            this.loadUsers(searchValue).then(response => this.updateUsers(response))
         } else {
             this.clearUsers()
         }
     }
+
+    async loadUsers(searchValue) {
+        return await fetch(`https://api.github.com/search/repositories?q=${searchValue}&per_page=${userInList}`);
+    }
+
+    updateUsers(response, isUpdate = false) {
+        let users;
+        if (response.ok) {
+            if (!isUpdate) {
+                this.clearUsers();
+            }
+            response.json().then((res) => {
+                if (res.items) {
+                    users = res.items;
+                    users.forEach(user => this.view.createRepo(user));
+                } else {
+                    this.clearUsers();
+                }
+            });
+        } else {
+            console.log('Error 1' + response.status);
+        }
+    }
+
 
     clearUsers() {
         this.view.unordererList.innerHTML = '';
